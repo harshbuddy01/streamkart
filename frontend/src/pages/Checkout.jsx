@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CreditCard, Lock } from "lucide-react";
@@ -13,11 +13,16 @@ export default function Checkout() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [submitting, setSubmitting] = useState(false);
+  const [paid, setPaid] = useState(false);
 
-  if (items.length === 0) {
-    navigate("/browse");
-    return null;
-  }
+  // Guard: redirect away from checkout if cart is empty AND we haven't just paid
+  useEffect(() => {
+    if (!paid && !submitting && items.length === 0) {
+      navigate("/browse");
+    }
+  }, [paid, submitting, items.length, navigate]);
+
+  if (items.length === 0 && !paid && !submitting) return null;
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -67,8 +72,9 @@ export default function Checkout() {
       });
 
       toast.success("Payment successful");
-      clear();
+      setPaid(true);
       navigate(`/order/${orderResp.order_id}`);
+      clear();
     } catch (err) {
       console.error(err);
       toast.error("Payment failed. Please try again.");

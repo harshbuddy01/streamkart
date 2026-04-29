@@ -44,10 +44,10 @@ export const ProductCard = ({ product }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
             <span className="font-serif-display text-2xl text-[#722F37]" data-testid={`product-price-${product.id}`}>
-              ${product.price.toFixed(2)}
+              {format(product.price)}
             </span>
             {product.original_price && (
-              <span className="text-xs text-[#4A4A4A]/60 line-through">${product.original_price.toFixed(2)}</span>
+              <span className="text-xs text-[#4A4A4A]/60 line-through">{format(product.original_price)}</span>
             )}
           </div>
           <div className="flex items-center gap-1 text-xs text-[#1A1A1A]">

@@ -20,7 +20,7 @@ const POLICIES = {
       },
       {
         h: "4. Pricing & Currency",
-        p: "All prices are listed in USD and are inclusive of applicable taxes unless otherwise stated. We reserve the right to change pricing for future purchases at any time; prior purchases are unaffected.",
+        p: "All prices are listed in INR (Indian Rupees) as our base currency and are automatically displayed in your local currency for convenience. The final charge is processed in INR by our payment gateway. Conversion rates shown on-site are approximate; your card issuer's actual rate may vary slightly. We reserve the right to change pricing for future purchases at any time; prior purchases are unaffected.",
       },
       {
         h: "5. Availability",
