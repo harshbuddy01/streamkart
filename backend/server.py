@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -10,6 +10,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 import asyncio
+import requests
 
 from seed_data import SEED_PRODUCTS, SEED_CATEGORIES, SEED_AUTHORS
 
@@ -97,6 +98,23 @@ async def seed_database():
 @api_router.get("/")
 async def root():
     return {"message": "StreamKart API", "version": "1.0"}
+
+
+@api_router.get("/geo")
+async def geo(request: Request):
+    """Returns the visitor's country_code (best-effort) for currency auto-detection."""
+    fwd = request.headers.get("x-forwarded-for", "")
+    ip = fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "")
+    country = None
+    try:
+        if ip and not ip.startswith(("10.", "127.", "192.168.", "172.")):
+            r = requests.get(f"https://ipapi.co/{ip}/json/", timeout=2.5)
+            if r.ok:
+                data = r.json()
+                country = data.get("country_code")
+    except Exception:
+        country = None
+    return {"country_code": country}
 
 
 @api_router.get("/products", response_model=List[Product])

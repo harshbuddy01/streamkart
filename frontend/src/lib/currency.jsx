@@ -41,7 +41,8 @@ export function CurrencyProvider({ children }) {
     // Only auto-detect if user has not previously set a preference
     if (localStorage.getItem(STORAGE_KEY)) return;
     let cancelled = false;
-    fetch("https://ipapi.co/json/", { cache: "no-store" })
+    const backend = process.env.REACT_APP_BACKEND_URL;
+    fetch(`${backend}/api/geo`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data?.country_code) return;
