@@ -6,13 +6,13 @@ export const Footer = () => (
       <div className="col-span-2">
         <div className="font-serif-display text-4xl mb-3">StreamKart</div>
         <p className="text-[#F9F6F0]/70 text-sm leading-relaxed max-w-md">
-          A curated bookstore for international readers — books, audiobooks and news collections from the
-          world's most celebrated voices. Delivered in print, in audio, in good company.
+          A digital bookstore for international readers — books, audiobooks and news collections from
+          the world's most celebrated voices. Streamed online, instantly. No shipping required.
         </p>
         <div className="mt-8 flex items-center gap-3 text-xs tracking-[0.3em] uppercase text-[#D4AF37]">
           <span>Est. 2026</span>
           <span className="w-8 h-px bg-[#D4AF37]/50" />
-          <span>Worldwide Shipping</span>
+          <span>Read Online · Worldwide</span>
         </div>
       </div>
       <div>
@@ -20,17 +20,15 @@ export const Footer = () => (
         <ul className="space-y-2 text-sm text-[#F9F6F0]/80">
           <li><Link to="/browse?category=book" className="hover:text-[#D4AF37]">Books</Link></li>
           <li><Link to="/browse?category=audiobook" className="hover:text-[#D4AF37]">Audiobooks</Link></li>
-          <li><Link to="/browse?category=news" className="hover:text-[#D4AF37]">News</Link></li>
           <li><Link to="/browse" className="hover:text-[#D4AF37]">All Titles</Link></li>
         </ul>
       </div>
       <div>
         <div className="text-xs tracking-[0.3em] uppercase text-[#D4AF37] mb-4">Customer</div>
         <ul className="space-y-2 text-sm text-[#F9F6F0]/80">
-          <li>Shipping & Delivery</li>
-          <li>Returns</li>
-          <li>Gift Cards</li>
-          <li>Contact</li>
+          <li><Link to="/policy/support" className="hover:text-[#D4AF37]" data-testid="footer-support">Support</Link></li>
+          <li><Link to="/policy/refund" className="hover:text-[#D4AF37]" data-testid="footer-refund">Refund Policy</Link></li>
+          <li><Link to="/policy/terms" className="hover:text-[#D4AF37]" data-testid="footer-terms">Terms & Conditions</Link></li>
         </ul>
       </div>
     </div>

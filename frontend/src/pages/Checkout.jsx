@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CreditCard, Lock } from "lucide-react";
 import { useCart } from "../lib/cart";
+import { useCurrency } from "../lib/currency";
 import { createOrder, verifyPayment } from "../lib/api";
 
 export default function Checkout() {
   const { items, subtotal, clear } = useCart();
+  const { format, code } = useCurrency();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
@@ -144,6 +146,9 @@ export default function Checkout() {
             <p className="text-xs text-[#4A4A4A] mt-4 flex items-center gap-2">
               <Lock size={12} /> Demo mode — payments are simulated. Connect live keys to enable real charges.
             </p>
+            <p className="text-xs text-[#722F37] mt-3">
+              By placing this order you accept our <a href="/policy/refund" className="underline">no-refund-after-purchase policy</a> and <a href="/policy/terms" className="underline">terms</a>.
+            </p>
           </div>
         </div>
 
@@ -158,25 +163,28 @@ export default function Checkout() {
                   </div>
                   <div className="flex-1">
                     <div className="text-[#1A1A1A]">{it.title}</div>
-                    <div className="text-xs text-[#4A4A4A]">Qty {it.quantity} · ${it.price.toFixed(2)}</div>
+                    <div className="text-xs text-[#4A4A4A]">Qty {it.quantity} · {format(it.price)}</div>
                   </div>
-                  <div className="text-[#1A1A1A]">${(it.price * it.quantity).toFixed(2)}</div>
+                  <div className="text-[#1A1A1A]">{format(it.price * it.quantity)}</div>
                 </div>
               ))}
             </div>
             <div className="border-t border-[#D4AF37]/30 mt-5 pt-5 flex justify-between items-baseline">
               <span className="text-sm uppercase tracking-[0.2em] text-[#1A1A1A]">Total</span>
               <span className="font-serif-display text-3xl text-[#722F37]" data-testid="checkout-total">
-                ${subtotal.toFixed(2)}
+                {format(subtotal)}
               </span>
             </div>
+            <p className="text-[10px] text-[#4A4A4A] mt-3">
+              Showing in {code}. Final charge processed in INR by your selected gateway.
+            </p>
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-7 bg-[#722F37] text-white py-4 rounded-sm uppercase text-sm tracking-wider hover:bg-[#5a252b] disabled:opacity-60 transition-colors"
+              className="w-full mt-5 bg-[#722F37] text-white py-4 rounded-sm uppercase text-sm tracking-wider hover:bg-[#5a252b] disabled:opacity-60 transition-colors"
               data-testid="place-order-button"
             >
-              {submitting ? "Processing…" : `Pay $${subtotal.toFixed(2)}`}
+              {submitting ? "Processing…" : `Pay ${format(subtotal)}`}
             </button>
           </div>
         </div>

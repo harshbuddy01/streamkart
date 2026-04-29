@@ -26,17 +26,25 @@ def test_list_products(session):
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)
-    assert len(data) >= 24
+    assert len(data) == 34, f"Expected 34 products, got {len(data)}"
     assert all("id" in p and "title" in p and "price" in p for p in data)
+    # All prices should be INR base (numeric, e.g., 1199)
+    assert all(isinstance(p["price"], (int, float)) and p["price"] > 100 for p in data)
 
 
-@pytest.mark.parametrize("cat,minc", [("book", 10), ("audiobook", 8), ("news", 6)])
-def test_filter_category(session, cat, minc):
+@pytest.mark.parametrize("cat,expected", [("book", 24), ("audiobook", 10)])
+def test_filter_category(session, cat, expected):
     r = session.get(f"{API}/products", params={"category": cat})
     assert r.status_code == 200
     data = r.json()
-    assert len(data) >= minc
+    assert len(data) == expected, f"Expected {expected} {cat}, got {len(data)}"
     assert all(p["category"] == cat for p in data)
+
+
+def test_filter_category_news_empty(session):
+    r = session.get(f"{API}/products", params={"category": "news"})
+    assert r.status_code == 200
+    assert r.json() == []
 
 
 def test_search(session):
@@ -71,7 +79,16 @@ def test_categories(session):
     assert r.status_code == 200
     data = r.json()
     slugs = {c["slug"] for c in data}
-    assert {"book", "audiobook", "news"}.issubset(slugs)
+    assert slugs == {"all", "book", "audiobook"}, f"Unexpected categories: {slugs}"
+    assert "news" not in slugs
+
+
+def test_get_product_inr_price(session):
+    r = session.get(f"{API}/products/p-001")
+    assert r.status_code == 200
+    p = r.json()
+    # INR base — Norwegian Wood is 1199
+    assert p["price"] == 1199
 
 
 def test_authors(session):
@@ -88,9 +105,9 @@ def order_payload():
     return {
         "items": [
             {"product_id": "p-001", "title": "Norwegian Wood", "author": "Haruki Murakami",
-             "price": 14.99, "quantity": 2, "cover_image": "x"},
+             "price": 1199, "quantity": 2, "cover_image": "x"},
             {"product_id": "p-008", "title": "Sapiens", "author": "Yuval Noah Harari",
-             "price": 18.99, "quantity": 1, "cover_image": "x"},
+             "price": 1599, "quantity": 1, "cover_image": "x"},
         ],
         "customer_name": "TEST_User",
         "customer_email": "test_user@example.com",
@@ -104,13 +121,14 @@ def test_create_order_razorpay(session, order_payload):
     assert r.status_code == 200, r.text
     data = r.json()
     assert "order_id" in data
-    expected_total = round(14.99 * 2 + 18.99, 2)
+    expected_total = round(1199 * 2 + 1599, 2)
     assert data["total_amount"] == expected_total
     assert data["status"] == "pending"
     ps = data["payment_session"]
     assert ps["provider"] == "razorpay"
     assert ps["session_id"].startswith("rzp_mock_")
     assert ps["amount_paise"] == int(expected_total * 100)
+    assert ps["currency"] == "INR"
 
 
 def test_create_order_cashfree(session, order_payload):

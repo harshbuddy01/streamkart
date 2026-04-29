@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "../lib/cart";
+import { useCurrency } from "../lib/currency";
 
 export default function Cart() {
   const { items, updateQty, removeItem, subtotal } = useCart();
+  const { format } = useCurrency();
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -54,7 +56,7 @@ export default function Cart() {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="font-serif-display text-2xl text-[#722F37]">
-                      ${(it.price * it.quantity).toFixed(2)}
+                      {format(it.price * it.quantity)}
                     </span>
                     <button
                       onClick={() => removeItem(it.product_id)}
@@ -75,15 +77,15 @@ export default function Cart() {
             <h2 className="font-serif-display text-2xl text-[#1A1A1A] mb-6">Order summary</h2>
             <div className="flex justify-between text-sm text-[#4A4A4A] mb-2">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>{format(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm text-[#4A4A4A] mb-2">
-              <span>Shipping</span>
-              <span>Calculated at checkout</span>
+              <span>Digital delivery</span>
+              <span className="text-[#722F37]">Instant · Free</span>
             </div>
             <div className="border-t border-[#D4AF37]/30 mt-5 pt-5 flex justify-between items-baseline">
               <span className="text-sm uppercase tracking-[0.2em] text-[#1A1A1A]">Total</span>
-              <span className="font-serif-display text-3xl text-[#722F37]" data-testid="cart-total">${subtotal.toFixed(2)}</span>
+              <span className="font-serif-display text-3xl text-[#722F37]" data-testid="cart-total">{format(subtotal)}</span>
             </div>
             <button
               onClick={() => navigate("/checkout")}

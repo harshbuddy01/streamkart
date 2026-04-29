@@ -1,0 +1,73 @@
+{
+  "summary": "Re-ran full E2E. Backend: 18/18 pass (updated test_streamkart.py for new shape: 24 books + 10 audiobooks = 34, news=[], 3 categories no news, INR base prices, INR amount_paise). Frontend: header/footer/nav/policy pages/categories/browse counts (24+10) all pass; currency dropdown lists 9 currencies and persists via localStorage. Found 2 critical functional bugs: (1) ProductCard does NOT use currency context — hardcodes '$' + raw INR price (e.g. '$1199.00') so currency switcher does not affect Home (featured/bestsellers) or Browse cards; (2) Checkout success redirect goes to /browse instead of /order/{id}, so 'Your library is ready' page never shows.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "ProductCard.jsx (lines 46-50)",
+        "issue": "Price rendered as `${product.price.toFixed(2)}` with hardcoded '$' and no currency conversion. Result: Home featured/bestsellers and Browse cards always show '$1199.00' regardless of selected currency. Detail page, Cart, Checkout, OrderSuccess use format() correctly so they DO switch.",
+        "selector": "[data-testid^=\"product-price-p-\"]",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Checkout.jsx (lines 17-20)",
+        "issue": "Empty-cart redirect runs during render: `if (items.length === 0) { navigate('/browse'); return null; }`. After successful payment, clear() empties cart, component re-renders before navigate('/order/{id}') effect — the empty-cart guard fires first and sends user to /browse. 'Your library is ready' success page never shown. Also produces React warning: 'Cannot update a component (BrowserRouter) while rendering a different component (Checkout)'. Fix: move guard into useEffect, or set a `paid` flag and skip the guard once payment completes.",
+        "selector": "/checkout -> /order/{id}",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Policy.jsx (Terms, line 23)",
+        "issue": "Terms says 'All prices are listed in USD' but base currency is INR with multi-currency display. Update copy to 'INR (auto-converted to your local currency for display)'.",
+        "selector": "/policy/terms",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Checkout success",
+        "issue": "User reaches /browse with 'Payment successful' toast instead of /order/{id} success page. Backend create+verify both succeed (200 OK) and order is persisted as paid; only the post-verify navigation is broken.",
+        "affected_selectors": ["/order/{id}", "OrderSuccess page"]
+      },
+      {
+        "flow": "Currency display on listing pages",
+        "issue": "useCurrency() context changes propagate to ProductDetail/Cart/Checkout but NOT to ProductCard (Home featured, bestsellers, Browse, audiobook showcase, related products).",
+        "affected_selectors": ["[data-testid^=\"product-price-p-\"]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_streamkart.py",
+    "/app/test_reports/pytest/streamkart_results.xml"
+  ],
+  "action_items": [
+    "Fix ProductCard.jsx: import useCurrency, replace `${product.price.toFixed(2)}` and original_price with `format(product.price)` / `format(product.original_price)` so currency switching reflects everywhere.",
+    "Fix Checkout.jsx empty-cart guard: wrap in useEffect and skip once submitting/paid, OR navigate first and clear() after, so /order/{id} success page renders.",
+    "Update Policy.jsx Terms text: 'All prices are listed in USD' -> 'All prices are listed in INR (displayed in your local currency)'.",
+    "Optional: silence ipapi.co CORS noise by ignoring fetch failure (already caught) — non-blocking."
+  ],
+  "critical_code_review_comments": [
+    "ProductCard not consuming CurrencyProvider despite being the most-used price renderer — primary multi-currency regression source.",
+    "Checkout has setState/navigate during render (React warning) — anti-pattern; should use useEffect for guards.",
+    "Backend correctly stores INR and returns amount_paise = price*100. Verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_streamkart.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18)",
+    "frontend": "~70% — header/footer/policies/browse counts/currency dropdown/cart/detail page all OK; ProductCard currency + checkout-to-order redirect broken"
+  },
+  "test_credentials": "n/a (no auth)",
+  "seed_data_creation": "none — used existing seeded products (34) + ephemeral TEST_User orders",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is fully green and fixtures use INR prices. Re-test focus after main agent fixes: (a) load home in INR, switch to USD, confirm featured/bestsellers/Browse cards now show '$' values matching detail page; (b) full cart -> checkout -> Pay flow lands on /order/{id} with 'Your library is ready' visible. Note: ipapi.co is CORS-blocked from preview origin — that is expected and currency falls back to last localStorage value or INR.",
+  "rca of the issue": {
+    "productcard_currency": "ProductCard.jsx renders price using template literal `${product.price.toFixed(2)}` without calling format() from useCurrency. Reproduction: load /, observe '$1199.00'; switch to USD via header dropdown — value remains '$1199.00' (no conversion). Mitigation: import useCurrency in ProductCard and use format(product.price).",
+    "checkout_redirect": "Reproduction: add a product, /cart -> Checkout, fill name/email/phone, click Pay. Backend POST /api/orders 200 + POST /api/orders/verify 200 (status=paid). Toast 'Payment successful' appears but URL becomes /browse, not /order/{id}. Cause: in Checkout.jsx the empty-cart guard at lines 17-20 runs during render. clear() empties items synchronously, the next render hits the guard and navigates to /browse before the previously-issued navigate('/order/{id}') is processed. Mitigation: move guard into useEffect with a state flag like `submittedRef` to suppress redirect after successful payment, or call navigate('/order/{id}') BEFORE clear()."
+  }
+}

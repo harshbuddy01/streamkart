@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Star, ShoppingBag, Zap, ArrowLeft, Headphones, BookOpen, Newspaper } from "lucide-react";
+import { Star, ShoppingBag, Zap, ArrowLeft, Headphones, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { fetchProduct } from "../lib/api";
 import { useCart } from "../lib/cart";
+import { useCurrency } from "../lib/currency";
 
-const icons = { audiobook: Headphones, news: Newspaper, book: BookOpen };
+const icons = { audiobook: Headphones, book: BookOpen };
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [qty, setQty] = useState(1);
   const { addItem } = useCart();
+  const { format } = useCurrency();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -77,11 +79,11 @@ export default function ProductDetail() {
 
           <div className="flex items-baseline gap-3 mb-8">
             <span className="font-serif-display text-5xl text-[#722F37]" data-testid="detail-price">
-              ${product.price.toFixed(2)}
+              {format(product.price)}
             </span>
             {product.original_price && (
               <span className="text-lg text-[#4A4A4A]/60 line-through">
-                ${product.original_price.toFixed(2)}
+                {format(product.original_price)}
               </span>
             )}
           </div>
@@ -116,18 +118,21 @@ export default function ProductDetail() {
             <button
               onClick={addToCart}
               className="inline-flex items-center gap-2 border border-[#1A1A1A] text-[#1A1A1A] px-8 py-4 rounded-sm hover:bg-[#1A1A1A] hover:text-white transition-colors text-sm tracking-wider uppercase"
-              data-testid="add-to-cart-button"
+              data-testid="add-to-cart-btn"
             >
               <ShoppingBag size={16} /> Add to cart
             </button>
             <button
               onClick={buyNow}
               className="inline-flex items-center gap-2 bg-[#722F37] text-white px-8 py-4 rounded-sm hover:bg-[#5a252b] transition-colors text-sm tracking-wider uppercase"
-              data-testid="buy-now-button"
+              data-testid="buy-now-btn"
             >
-              <Zap size={16} /> Buy now
+              <Zap size={16} /> Buy now & read
             </button>
           </div>
+          <p className="text-xs text-[#4A4A4A] mt-5">
+            Digital purchase · Read online instantly · <Link to="/policy/refund" className="underline hover:text-[#722F37]">No refunds after purchase</Link>
+          </p>
         </div>
       </section>
     </div>
