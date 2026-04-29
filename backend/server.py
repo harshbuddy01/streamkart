@@ -13,6 +13,7 @@ import asyncio
 import requests
 
 from seed_data import SEED_PRODUCTS, SEED_CATEGORIES, SEED_AUTHORS
+from reader_content import reader_payload
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -229,6 +230,28 @@ async def get_order(order_id: str):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
+
+
+@api_router.get("/read/{order_id}/{product_id}")
+async def read_title(order_id: str, product_id: str):
+    """Grant the reader/player payload for a purchased title.
+    Validates the order is paid and contains the product."""
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.get("status") != "paid":
+        raise HTTPException(status_code=403, detail="Title is locked — payment not completed")
+    item = next((i for i in order["items"] if i["product_id"] == product_id), None)
+    if not item:
+        raise HTTPException(status_code=403, detail="This title is not part of your order")
+    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Title no longer available")
+    return {
+        "product": product,
+        "order_id": order_id,
+        "reader": reader_payload(product),
+    }
 
 
 # Include the router

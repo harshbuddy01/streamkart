@@ -12,6 +12,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Policy from "./pages/Policy";
+import Reader from "./pages/Reader";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/order/:id" element={<OrderSuccess />} />
               <Route path="/policy/:type" element={<Policy />} />
+              <Route path="/read/:orderId/:productId" element={<Reader />} />
             </Routes>
             <Footer />
             <Toaster

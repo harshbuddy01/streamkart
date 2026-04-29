@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, BookOpen, Headphones, ArrowRight } from "lucide-react";
 import { fetchOrder } from "../lib/api";
 import { useCurrency } from "../lib/currency";
 
@@ -36,19 +36,32 @@ export default function OrderSuccess() {
             </span>
           </div>
           <div className="space-y-4">
-            {order.items.map((it) => (
-              <div key={it.product_id} className="flex gap-4 text-sm pb-4 border-b border-[#EFE9DF] last:border-0 last:pb-0">
-                <div className="w-12 h-16 bg-[#EFE9DF] overflow-hidden rounded-sm flex-shrink-0">
-                  <img src={it.cover_image} alt={it.title} className="w-full h-full object-cover" />
+            {order.items.map((it) => {
+              const isAudio = it.title.toLowerCase().includes("audiobook");
+              return (
+                <div key={it.product_id} className="flex flex-col sm:flex-row gap-4 text-sm pb-4 border-b border-[#EFE9DF] last:border-0 last:pb-0" data-testid={`order-item-${it.product_id}`}>
+                  <div className="w-12 h-16 bg-[#EFE9DF] overflow-hidden rounded-sm flex-shrink-0">
+                    <img src={it.cover_image} alt={it.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-serif-display text-lg text-[#1A1A1A]">{it.title}</div>
+                    <div className="text-xs text-[#4A4A4A] italic">by {it.author}</div>
+                    <div className="text-xs text-[#4A4A4A] mt-1">Qty {it.quantity}</div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-[#1A1A1A]">{format(it.price * it.quantity)}</div>
+                    <Link
+                      to={`/read/${order.id}/${it.product_id}`}
+                      className="inline-flex items-center gap-1.5 bg-[#722F37] text-white px-3 py-1.5 rounded-sm uppercase text-[10px] tracking-wider hover:bg-[#5a252b] transition-colors"
+                      data-testid={`open-${it.product_id}`}
+                    >
+                      {isAudio ? <Headphones size={12} /> : <BookOpen size={12} />}
+                      {isAudio ? "Listen" : "Read"} <ArrowRight size={12} />
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="font-serif-display text-lg text-[#1A1A1A]">{it.title}</div>
-                  <div className="text-xs text-[#4A4A4A] italic">by {it.author}</div>
-                  <div className="text-xs text-[#4A4A4A] mt-1">Qty {it.quantity}</div>
-                </div>
-                <div className="text-[#1A1A1A]">{format(it.price * it.quantity)}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="border-t border-[#D4AF37]/30 mt-6 pt-5 flex justify-between items-baseline">
             <span className="text-sm uppercase tracking-[0.2em] text-[#1A1A1A]">Total paid</span>

@@ -94,6 +94,9 @@ export default function Cart() {
             >
               Proceed to checkout
             </button>
+            <p className="text-[11px] text-[#4A4A4A] mt-4 leading-relaxed text-center">
+              Digital purchase · Read instantly online · <Link to="/policy/refund" className="underline hover:text-[#722F37]">No refunds after purchase</Link>
+            </p>
           </div>
         </div>
       </section>
