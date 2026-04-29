@@ -1,0 +1,88 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 1 (Organic & Earthy) - Warm Classic Editorial",
+  "emotional_tone": "Classic, Intellectual, Premium, Trusted, International",
+  "typography": {
+    "headings": {
+      "family": "Cormorant Garamond",
+      "style": "Elegant, serif, intellectual",
+      "classes": "font-serif tracking-tight text-[#1A1A1A]"
+    },
+    "body": {
+      "family": "Manrope",
+      "style": "Clean, highly readable sans-serif to contrast the classic headers",
+      "classes": "font-sans leading-relaxed text-[#2C2C2C]"
+    }
+  },
+  "color_palette": {
+    "background_primary": "#F9F6F0",
+    "background_secondary": "#EFE9DF",
+    "text_primary": "#1A1A1A",
+    "text_secondary": "#4A4A4A",
+    "accent_primary": "#722F37",
+    "accent_secondary": "#D4AF37",
+    "surface": "#FFFFFF"
+  },
+  "spacing_and_layout": {
+    "strategy": "Generous Spacing Philosophy. Use large padding (p-8 to p-24) to let the catalog breathe.",
+    "bento_grid": "Use Mode A 'Tetris' Grid for the Featured Catalog section to avoid boring identical cards.",
+    "corners": "Minimal rounding. Use rounded-sm or sharp edges for a classic paper/book feel."
+  },
+  "components": {
+    "header": "Crystal Glass effect (backdrop-blur-xl bg-[#F9F6F0]/80) with a 1px bottom border of #D4AF37/30. Logo in center (Cormorant Garamond, text-3xl).",
+    "product_card": "Flat background (bg-white), 1px solid border (border-[#EFE9DF]), no shadow by default. On hover: slight lift (-translate-y-1) and subtle warm shadow (shadow-xl shadow-[#722F37]/5).",
+    "buttons": "Primary CTA: bg-[#722F37] text-white hover:bg-[#5a252b] rounded-sm. Secondary: border border-[#1A1A1A] text-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-white rounded-sm.",
+    "marquee": "Editorial Ribbon style. Serif font, pale background (#EFE9DF), dark text (#1A1A1A), large gap (gap-32), slow drift. Used for Author Names or Categories."
+  },
+  "animations": {
+    "hover": "Smooth transform and opacity transitions. (transition-all duration-300 ease-out)",
+    "page_scroll": "Lenis smooth scrolling recommended for a premium momentum feel."
+  },
+  "image_urls": [
+    {
+      "category": "hero",
+      "url": "https://static.prod-images.emergentagent.com/jobs/26a13d95-9a81-4a7b-888d-0068c84116d6/images/2e5f7b9d4f5f17d4c5aa2355bd89702af151c78e3e5c9880385b45b3f3994958.png",
+      "description": "Curated stack of international books and news on a wooden table"
+    },
+    {
+      "category": "hero_background",
+      "url": "https://images.unsplash.com/photo-1774270115093-58d6eb433fb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHwyfHxib29rc2hlbGYlMjBsaWJyYXJ5JTIwY2xhc3NpY3xlbnwwfHx8fDE3Nzc0NjExOTZ8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Ornate library shelves, use with heavy cream overlay"
+    },
+    {
+      "category": "product_audiobook",
+      "url": "https://static.prod-images.emergentagent.com/jobs/26a13d95-9a81-4a7b-888d-0068c84116d6/images/1f31c5312a7b4930c4e0d686582ae41d6ff55ffb5fe2af34472104943452f604.png",
+      "description": "Audiobook player interface on antique desk"
+    },
+    {
+      "category": "product_book",
+      "url": "https://static.prod-images.emergentagent.com/jobs/26a13d95-9a81-4a7b-888d-0068c84116d6/images/828fa7780a0e859deeaf4614412772736f64685682ceb9dca54e8814b96eabf1.png",
+      "description": "Classic leather bound book cover"
+    },
+    {
+      "category": "author_spotlight",
+      "url": "https://static.prod-images.emergentagent.com/jobs/26a13d95-9a81-4a7b-888d-0068c84116d6/images/6a781c95b4f5c9ab748cfeeba8c0d2b6fed8a78cf3995b297bf1b1afd44dd09e.png",
+      "description": "Portrait of distinguished international author"
+    },
+    {
+      "category": "news_collection",
+      "url": "https://images.unsplash.com/photo-1624930301503-8c4cacf3c8a6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwxfHxuZXdzcGFwZXIlMjB2aW50YWdlJTIwcmVhZGluZ3xlbnwwfHx8fDE3Nzc0NjExOTZ8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Person reading vintage newspaper"
+    },
+    {
+      "category": "audiobook_lifestyle",
+      "url": "https://images.pexels.com/photos/12955927/pexels-photo-12955927.jpeg",
+      "description": "Man listening to headphones"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Use standard HTML/Tailwind for the landing page layouts to achieve the bento grid and classic asymmetry. Do not overuse Shadcn Cards.",
+    "Use Shadcn UI for interactive elements (shopping cart, checkout, dropdowns) but style them with minimal border-radius and the custom color palette.",
+    "Ensure all fonts are imported correctly (Cormorant Garamond for headings, Manrope for body).",
+    "Include 'data-testid' on all interactive elements (e.g. data-testid='add-to-cart-button').",
+    "For the hero section, use a split layout or bento grid, avoiding generic center-aligned text.",
+    "Integrate standard mock flows for the checkout process (Razorpay/Cashfree UI).",
+    "Run linting on JS files after implementation.",
+    "Maintain the warm, classic editorial aesthetic throughout the app, prioritizing typography and whitespace."
+  ]
+}
