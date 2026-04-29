@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Request, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -14,6 +14,12 @@ import requests
 
 from seed_data import SEED_PRODUCTS, SEED_CATEGORIES, SEED_AUTHORS
 from reader_content import reader_payload
+from auth import (
+    hash_password, verify_password, create_access_token,
+    make_current_user_dep,
+    RegisterIn, LoginIn, UserOut, AuthOut,
+    TicketCreate, TicketMessage, TicketOut,
+)
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -93,6 +99,35 @@ async def seed_database():
     if count == 0:
         await db.products.insert_many([dict(p) for p in SEED_PRODUCTS])
         logger.info(f"Seeded {len(SEED_PRODUCTS)} products")
+
+
+async def seed_admin():
+    await db.users.create_index("email", unique=True)
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@streamkart.com").lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    existing = await db.users.find_one({"email": admin_email})
+    if existing is None:
+        doc = {
+            "id": str(uuid.uuid4()),
+            "name": "StreamKart Admin",
+            "email": admin_email,
+            "password_hash": hash_password(admin_password),
+            "role": "admin",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.users.insert_one(doc)
+        logger.info(f"Seeded admin user: {admin_email}")
+    else:
+        if not verify_password(admin_password, existing.get("password_hash", "")):
+            await db.users.update_one(
+                {"email": admin_email},
+                {"$set": {"password_hash": hash_password(admin_password)}},
+            )
+            logger.info("Updated admin password from env")
+
+
+# ---------- Auth dependency ----------
+get_current_user = make_current_user_dep(lambda: db)
 
 
 # ---------- Routes ----------
@@ -254,6 +289,123 @@ async def read_title(order_id: str, product_id: str):
     }
 
 
+# ---------- Auth ----------
+def _user_to_out(u: dict) -> dict:
+    return {
+        "id": u["id"],
+        "name": u["name"],
+        "email": u["email"],
+        "role": u.get("role", "user"),
+        "created_at": u.get("created_at", datetime.now(timezone.utc).isoformat()),
+    }
+
+
+@api_router.post("/auth/register", response_model=AuthOut)
+async def auth_register(payload: RegisterIn):
+    email = payload.email.lower()
+    existing = await db.users.find_one({"email": email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="An account with this email already exists")
+    user_doc = {
+        "id": str(uuid.uuid4()),
+        "name": payload.name.strip(),
+        "email": email,
+        "password_hash": hash_password(payload.password),
+        "role": "user",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.users.insert_one(user_doc)
+    token = create_access_token(user_doc["id"], email)
+    return {"user": _user_to_out(user_doc), "token": token}
+
+
+@api_router.post("/auth/login", response_model=AuthOut)
+async def auth_login(payload: LoginIn):
+    email = payload.email.lower()
+    user = await db.users.find_one({"email": email}, {"_id": 0})
+    if not user or not verify_password(payload.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_access_token(user["id"], email)
+    return {"user": _user_to_out(user), "token": token}
+
+
+@api_router.get("/auth/me", response_model=UserOut)
+async def auth_me(user=Depends(get_current_user)):
+    return _user_to_out(user)
+
+
+# ---------- Support tickets ----------
+TICKET_CATEGORIES = {"order", "payment", "reader", "account", "other"}
+INITIAL_RESPONSE = (
+    "Thanks for reaching out — your ticket has been received by the StreamKart support desk. "
+    "A human teammate will respond within one business day. In the meantime, please check "
+    "your order confirmation email for the title access link."
+)
+
+
+@api_router.post("/tickets", response_model=TicketOut)
+async def create_ticket(payload: TicketCreate, user=Depends(get_current_user)):
+    cat = payload.category.lower()
+    if cat not in TICKET_CATEGORIES:
+        raise HTTPException(status_code=400, detail=f"Invalid category. Choose one of: {', '.join(sorted(TICKET_CATEGORIES))}")
+    now = datetime.now(timezone.utc).isoformat()
+    ticket = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "user_email": user["email"],
+        "user_name": user["name"],
+        "subject": payload.subject.strip(),
+        "category": cat,
+        "order_id": payload.order_id,
+        "status": "open",
+        "messages": [
+            {"author": "user", "name": user["name"], "body": payload.message.strip(), "at": now},
+            {"author": "support", "name": "StreamKart Support", "body": INITIAL_RESPONSE, "at": now},
+        ],
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.tickets.insert_one(ticket)
+    return ticket
+
+
+@api_router.get("/tickets", response_model=list[TicketOut])
+async def list_tickets(user=Depends(get_current_user)):
+    cursor = db.tickets.find({"user_id": user["id"]}, {"_id": 0}).sort("updated_at", -1)
+    return await cursor.to_list(200)
+
+
+@api_router.get("/tickets/{ticket_id}", response_model=TicketOut)
+async def get_ticket(ticket_id: str, user=Depends(get_current_user)):
+    t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if t["user_id"] != user["id"] and user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Not your ticket")
+    return t
+
+
+@api_router.post("/tickets/{ticket_id}/messages", response_model=TicketOut)
+async def add_ticket_message(ticket_id: str, payload: TicketMessage, user=Depends(get_current_user)):
+    t = await db.tickets.find_one({"id": ticket_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if t["user_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Not your ticket")
+    if t.get("status") == "closed":
+        raise HTTPException(status_code=400, detail="This ticket is closed. Please open a new one.")
+    now = datetime.now(timezone.utc).isoformat()
+    msg = {"author": "user", "name": user["name"], "body": payload.body.strip(), "at": now}
+    await db.tickets.update_one(
+        {"id": ticket_id},
+        {"$push": {"messages": msg}, "$set": {"updated_at": now, "status": "awaiting_support"}},
+    )
+    t["messages"].append(msg)
+    t["updated_at"] = now
+    t["status"] = "awaiting_support"
+    return t
+
+
 # Include the router
 app.include_router(api_router)
 
@@ -272,6 +424,7 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     await seed_database()
+    await seed_admin()
 
 
 @app.on_event("shutdown")

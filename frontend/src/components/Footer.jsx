@@ -26,9 +26,10 @@ export const Footer = () => (
       <div>
         <div className="text-xs tracking-[0.3em] uppercase text-[#D4AF37] mb-4">Customer</div>
         <ul className="space-y-2 text-sm text-[#F9F6F0]/80">
-          <li><Link to="/policy/support" className="hover:text-[#D4AF37]" data-testid="footer-support">Support</Link></li>
+          <li><Link to="/support" className="hover:text-[#D4AF37]" data-testid="footer-support">Support tickets</Link></li>
           <li><Link to="/policy/refund" className="hover:text-[#D4AF37]" data-testid="footer-refund">Refund Policy</Link></li>
           <li><Link to="/policy/terms" className="hover:text-[#D4AF37]" data-testid="footer-terms">Terms & Conditions</Link></li>
+          <li><Link to="/login" className="hover:text-[#D4AF37]" data-testid="footer-signin">Sign in / Register</Link></li>
         </ul>
       </div>
     </div>
